@@ -1,13 +1,32 @@
 {
   "name": "ionic-client",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dreadjr/node-ionic-client"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "bugs": {
+    "url": "https://github.com/dreadjr/node-ionic-client/issues"
+  },
+  "contributors": [{
+    "name": "",
+    "email": "dreadjr@gmail.com"
+  }],
+  "keywords": [
+    "firebase",
+    "sqs",
+    "aws"
+  ],
+  "author": "dreadjr@gmail.com",
   "license": "ISC",
+  "preferGlobal": false,
+  "analyze": true,
+  "private": false,
   "dependencies": {
     "assert-plus": "^0.1.5",
     "restify": "^4.0.3"
