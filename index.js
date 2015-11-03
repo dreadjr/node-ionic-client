@@ -8,15 +8,16 @@ function IonicClient(options) {
     assert.string(options.apiKey, 'options.apiKey');
     assert.optionalString(options.url, 'options.url');
 
-    var url = options.url || 'https://push.ionic.io/api/v1/';
+    var url = options.url || 'https://push.ionic.io/';
 
-    this.client = restify.createClient({
+    this.client = restify.createJsonClient({
       log: options.log,
       name: 'IonicClient',
-      type: 'json',
+      // type: 'json',
       url: url,
       headers: {
         'X-Ionic-Application-Id': options.appId,
+        'Authorization': new Buffer(options.apiKey + ':').toString('base64')
       },
       userAgent: 'node-ionic-client'
     });
@@ -29,22 +30,51 @@ function IonicClient(options) {
     this.apiKey = options.apiKey;
 
     if (options.apiKey) {
-      this.client.basicAuth(options.apiKey, "");
+      //this.client.basicAuth("", options.apiKey);
     }
 }
 
 var fn = IonicClient.prototype;
 
-fn.push = function(tokens, messages, cb) {
-  assert.string(task, 'task');
+fn.pushToUsers = function(userIds, notification, options, cb) {
+  return this._push('users', userIds, notification, options, cb);
+}
+
+fn.push = function(tokens, notifications, options, cb) {
+  return this._push('tokens', tokens, notifications, options, cb);
+}
+
+fn._push = function(type, tokens, notification, options, cb) {
+  assert.string(type, 'type');
+  assert.arrayOfString(tokens, 'tokens');
+  assert.object(notification, 'notification');
+  assert.optionalString(notification.alert, 'notification.alert');
+  assert.optionalObject(notification.ios, 'notification.ios');
+  assert.optionalObject(notification.android, 'notification.android');
+  assert.object(options, 'options');
+  assert.optionalNumber(options.scheduled, 'options.scheduled');
+  assert.optionalBool(options.production, 'options.production');
   assert.func(cb, 'callback');
 
-  // user_ids || tokens
-  // scheduled | unix time stamp
-  // notification
-  // production: true | false
+  var payload = {
+    notification: notification
+  };
 
-  this.client.post('/push', {task: task}, function (err, req, res, obj) {
+  if (type === 'users') {
+    payload.user_ids = tokens;
+  } else {
+    payload.tokens = tokens;
+  }
+
+  if (options.scheduled) {
+    payload.scheduled = options.scheduled;
+  }
+
+  if (options.production) {
+    payload.production = options.production;
+  }
+
+  this.client.post('/api/v1/push', payload, function (err, req, res, obj) {
     if (err) {
       // TODO: add statusCode to error?
       cb(err);
@@ -54,13 +84,14 @@ fn.push = function(tokens, messages, cb) {
   });
 }
 
-fn.status = function(statusId, cb) {
-  assert.string(statusId, 'statusId');
+fn.status = function(messageId, cb) {
+  assert.string(messageId, 'messageId');
   assert.func(cb, 'callback');
 
-  this.client.get('/status/' + statusId, function (err, req, res, obj) {
+  this.client.get('/api/v1/status/' + messageId, function (err, req, res, obj) {
     if (err) {
       // TODO: add statusCode to error?
+      //.log(res.statusCode);
       cb(err);
     } else {
       cb(null, obj);
@@ -72,6 +103,4 @@ module.exports = {
   createClient: function createClient(options) {
     return (new IonicClient(options));
   }
-};
-}
 };
