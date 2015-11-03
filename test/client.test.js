@@ -7,7 +7,7 @@ require('dotenv').load();
 var ionic = require('./../');
 
 var log = bunyan.createLogger({
-    name: 'todo_unit_test',
+    name: 'unt_test',
     level: process.env.LOG_LEVEL || 'trace',
     serializers: restify.bunyan.serializers,
     stream: process.stdout
