@@ -1,6 +1,6 @@
 {
   "name": "ionic-client",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "main": "index.js",
   "repository": {
@@ -18,9 +18,10 @@
     "email": "dreadjr@gmail.com"
   }],
   "keywords": [
-    "firebase",
-    "sqs",
-    "aws"
+    "ionic",
+    "push",
+    "ios",
+    "android"
   ],
   "author": "dreadjr@gmail.com",
   "license": "ISC",
