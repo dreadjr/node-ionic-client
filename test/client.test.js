@@ -14,25 +14,27 @@ var log = bunyan.createLogger({
 });
 
 var options = {
-  appId: process.env.IONIC_APP_ID,
-  apiKey: process.env.IONIC_PRIVATE_KEY,
+  apiToken: process.env.IONIC_API_TOKEN,
   // log: log
 };
 
 var client = ionic.createClient(options);
 
-// client.status('080b6c8a81ce11e5bb81ba2a83e8cee0', function(err, msg) {
-//   if (err) {
-//     console.error(err);
-//   }
-//
-//   console.log('msg', msg);
-// });
-//
-// client.push(['token123'], { alert: 'Hello', ios: { } }, {}, function(err, msg) {
-//   if (err) {
-//     console.error(err);
-//   }
-//
-//   console.log('msg', msg);
-// });
+client.push(['token123'], process.env.IONIC_PUSH_SECURITY_PROFILE, { message: 'Hello', ios: { } }, {}, function(err, msg) {
+  if (err) {
+    console.error(err);
+    return;
+  }
+
+  console.log('msg', JSON.stringify(msg));
+
+  setTimeout(function() {
+    client.status(msg.data.uuid, function(err, msg) {
+      if (err) {
+        console.error(err);
+      }
+
+      console.log('msg status', JSON.stringify(msg));
+    });
+  }, 5000);
+ });

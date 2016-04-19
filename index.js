@@ -3,12 +3,11 @@ var assert = require('assert-plus');
 
 function IonicClient(options) {
     assert.object(options, 'options');
+    assert.string(options.apiToken, 'options.apiToken');
     assert.optionalObject(options.log, 'options.log');
-    assert.string(options.appId, 'options.appId');
-    assert.string(options.apiKey, 'options.apiKey');
     assert.optionalString(options.url, 'options.url');
 
-    var url = options.url || 'https://push.ionic.io/';
+    var url = options.url || 'https://api.ionic.io/';
 
     this.client = restify.createJsonClient({
       log: options.log,
@@ -16,8 +15,9 @@ function IonicClient(options) {
       // type: 'json',
       url: url,
       headers: {
-        'X-Ionic-Application-Id': options.appId,
-        'Authorization': new Buffer(options.apiKey + ':').toString('base64')
+        // 'X-Ionic-Application-Id': options.appId,
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + options.apiToken
       },
       userAgent: 'node-ionic-client'
     });
@@ -26,29 +26,26 @@ function IonicClient(options) {
       this.log = options.log.child({component: 'IonicClient'}, true);
     }
     this.url = options.url;
-    this.appId = options.appId;
-    this.apiKey = options.apiKey;
-
-    if (options.apiKey) {
-      //this.client.basicAuth("", options.apiKey);
-    }
+    this.apiToken = options.apiToken;
 }
 
 var fn = IonicClient.prototype;
 
-fn.pushToUsers = function(userIds, notification, options, cb) {
-  return this._push('users', userIds, notification, options, cb);
-}
+fn.pushToUsers = function(userIds, profile, notification, options, cb) {
+  return this._push('users', userIds, profile, notification, options, cb);
+};
 
-fn.push = function(tokens, notifications, options, cb) {
-  return this._push('tokens', tokens, notifications, options, cb);
-}
+fn.push = function(tokens, profile, notifications, options, cb) {
+  return this._push('tokens', tokens, profile, notifications, options, cb);
+};
 
-fn._push = function(type, tokens, notification, options, cb) {
+fn._push = function(type, tokens, profile, notification, options, cb) {
   assert.string(type, 'type');
+  assert.string(profile, 'profile');
   assert.arrayOfString(tokens, 'tokens');
   assert.object(notification, 'notification');
-  assert.optionalString(notification.alert, 'notification.alert');
+  assert.optionalString(notification.title, 'notification.title');
+  assert.optionalString(notification.message, 'notification.message');
   assert.optionalObject(notification.ios, 'notification.ios');
   assert.optionalObject(notification.android, 'notification.android');
   assert.object(options, 'options');
@@ -74,7 +71,10 @@ fn._push = function(type, tokens, notification, options, cb) {
     payload.production = options.production;
   }
 
-  this.client.post('/api/v1/push', payload, function (err, req, res, obj) {
+  // set security profile
+  payload.profile = profile;
+
+  this.client.post('/push/notifications', payload, function (err, req, res, obj) {
     if (err) {
       // TODO: add statusCode to error?
       cb(err);
@@ -82,13 +82,13 @@ fn._push = function(type, tokens, notification, options, cb) {
       cb(null, obj);
     }
   });
-}
+};
 
-fn.status = function(messageId, cb) {
-  assert.string(messageId, 'messageId');
+fn.status = function(notification_uuid, cb) {
+  assert.string(notification_uuid, 'notification_uuid');
   assert.func(cb, 'callback');
 
-  this.client.get('/api/v1/status/' + messageId, function (err, req, res, obj) {
+  this.client.get('/push/notifications/' + notification_uuid + '/messages', function (err, req, res, obj) {
     if (err) {
       // TODO: add statusCode to error?
       //.log(res.statusCode);
@@ -97,7 +97,7 @@ fn.status = function(messageId, cb) {
       cb(null, obj);
     }
   });
-}
+};
 
 module.exports = {
   createClient: function createClient(options) {
