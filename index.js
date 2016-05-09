@@ -1,5 +1,6 @@
 var restify = require('restify');
 var assert = require('assert-plus');
+var Promise = require('bluebird');
 
 function IonicClient(options) {
     assert.object(options, 'options');
@@ -16,7 +17,7 @@ function IonicClient(options) {
       url: url,
       headers: {
         // 'X-Ionic-Application-Id': options.appId,
-        'Content-Type': 'application/json',
+//        'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + options.apiToken
       },
       userAgent: 'node-ionic-client'
@@ -31,18 +32,18 @@ function IonicClient(options) {
 
 var fn = IonicClient.prototype;
 
-fn.pushToUsers = function(userIds, profile, notification, options, cb) {
-  return this._push('users', userIds, profile, notification, options, cb);
+fn.pushToUsers = function(userIds, profile, notification, options/*, cb*/) {
+  return this._push('user_ids', userIds, profile, notification, options/*, cb*/);
 };
 
-fn.push = function(tokens, profile, notifications, options, cb) {
-  return this._push('tokens', tokens, profile, notifications, options, cb);
+fn.push = function(tokens, profile, notifications, options/*, cb*/) {
+  return this._push('tokens', tokens, profile, notifications, options/*, cb*/);
 };
 
-fn._push = function(type, tokens, profile, notification, options, cb) {
+fn._push = function(type, tokensOrUserIds, profile, notification, options/*, cb*/) {
   assert.string(type, 'type');
   assert.string(profile, 'profile');
-  assert.arrayOfString(tokens, 'tokens');
+  assert.arrayOfString(tokensOrUserIds, 'tokensOrUserIds');
   assert.object(notification, 'notification');
   assert.optionalString(notification.title, 'notification.title');
   assert.optionalString(notification.message, 'notification.message');
@@ -51,17 +52,14 @@ fn._push = function(type, tokens, profile, notification, options, cb) {
   assert.object(options, 'options');
   assert.optionalNumber(options.scheduled, 'options.scheduled');
   assert.optionalBool(options.production, 'options.production');
-  assert.func(cb, 'callback');
+//  assert.func(cb, 'callback');
 
   var payload = {
     notification: notification
   };
 
-  if (type === 'users') {
-    payload.user_ids = tokens;
-  } else {
-    payload.tokens = tokens;
-  }
+  // set user_id or tokens field
+  payload[type] = tokensOrUserIds;
 
   if (options.scheduled) {
     payload.scheduled = options.scheduled;
@@ -74,30 +72,31 @@ fn._push = function(type, tokens, profile, notification, options, cb) {
   // set security profile
   payload.profile = profile;
 
-  this.client.post('/push/notifications', payload, function (err, req, res, obj) {
-    if (err) {
-      // TODO: add statusCode to error?
-      cb(err);
-    } else {
-      cb(null, obj);
-    }
-  });
+  var post = Promise.promisify(this.client.post, { context: this.client, multiArgs: true });
+  return post('/push/notifications', payload)
+    .spread(function(req, res, obj) {
+      return Promise.resolve(obj, req, res);
+    });
 };
 
-fn.status = function(notification_uuid, cb) {
+/*
+  Notifications: The individual push notifications you create and send via the API or the ionic.io dashboard. These may have any number of recipients (via user ID's, device tokens, or queries).
+
+  Messages: A recipient of a notification. For instance, a push you send to 10 device tokens will be comprised of 10 messages. These track their delivery status independently, giving you granular detail on their delivery.
+*/
+
+fn.status = function(notification_uuid/*, cb*/) {
   assert.string(notification_uuid, 'notification_uuid');
-  assert.func(cb, 'callback');
+//  assert.func(cb, 'callback');
 
-  this.client.get('/push/notifications/' + notification_uuid + '/messages', function (err, req, res, obj) {
-    if (err) {
-      // TODO: add statusCode to error?
-      //.log(res.statusCode);
-      cb(err);
-    } else {
-      cb(null, obj);
-    }
-  });
+  var get = Promise.promisify(this.client.get, { context: this.client, multiArgs: true });
+  return get('/push/notifications/' + notification_uuid + '/messages')
+    .spread(function(req, res, obj) {
+      return Promise.resolve(obj, req, res);
+    });
 };
+
+// Todo, highlight invalid and valid tokens, remove invalid
 
 module.exports = {
   createClient: function createClient(options) {

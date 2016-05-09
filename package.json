@@ -13,10 +13,12 @@
   "bugs": {
     "url": "https://github.com/dreadjr/node-ionic-client/issues"
   },
-  "contributors": [{
-    "name": "",
-    "email": "dreadjr@gmail.com"
-  }],
+  "contributors": [
+    {
+      "name": "",
+      "email": "dreadjr@gmail.com"
+    }
+  ],
   "keywords": [
     "ionic",
     "push",
@@ -34,7 +36,10 @@
   },
   "devDependencies": {
     "bunyan": "^1.5.1",
+    "chai": "^3.5.0",
     "dotenv": "^1.2.0",
-    "nock": "^2.17.0"
+    "nock": "^8.0.0",
+    "respect": "^0.2.2",
+    "sinon": "^1.17.4"
   }
 }
