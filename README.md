@@ -28,7 +28,7 @@ var options = {
   log: log
 };
 
-var client = ionic.createClient(options);
+var client = new ionic(options);
 
 var notification = {
   message: 'test message',
