@@ -1,46 +1,48 @@
+'use strict';
+
 var restify = require('restify');
 var assert = require('assert-plus');
 var Promise = require('bluebird');
 
 function IonicClient(options) {
-    assert.object(options, 'options');
-    assert.string(options.apiToken, 'options.apiToken');
-    assert.optionalObject(options.log, 'options.log');
-    assert.optionalString(options.url, 'options.url');
+  assert.object(options, 'options');
+  assert.string(options.apiToken, 'options.apiToken');
+  assert.optionalObject(options.log, 'options.log');
+  assert.optionalString(options.url, 'options.url');
 
-    var url = options.url || 'https://api.ionic.io/';
+  var url = options.url || 'https://api.ionic.io/';
 
-    this.client = restify.createJsonClient({
-      log: options.log,
-      name: 'IonicClient',
-      // type: 'json',
-      url: url,
-      headers: {
-        // 'X-Ionic-Application-Id': options.appId,
-//        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + options.apiToken
-      },
-      userAgent: 'node-ionic-client'
-    });
+  this.client = restify.createJsonClient({
+    log: options.log,
+    name: 'IonicClient',
+    // type: 'json',
+    url: url,
+    headers: {
+      // 'X-Ionic-Application-Id': options.appId,
+      // 'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + options.apiToken
+    },
+    userAgent: 'node-ionic-client'
+  });
 
-    if (options.log) {
-      this.log = options.log.child({component: 'IonicClient'}, true);
-    }
-    this.url = options.url;
-    this.apiToken = options.apiToken;
+  if (options.log) {
+    this.log = options.log.child({component: 'IonicClient'}, true);
+  }
+  this.url = options.url;
+  this.apiToken = options.apiToken;
 }
 
 var fn = IonicClient.prototype;
 
-fn.pushToUsers = function(userIds, profile, notification, options/*, cb*/) {
-  return this._push('user_ids', userIds, profile, notification, options/*, cb*/);
+fn.pushToUsers = function(userIds, profile, notification, options) {
+  return this._push('user_ids', userIds, profile, notification, options);
 };
 
-fn.push = function(tokens, profile, notifications, options/*, cb*/) {
-  return this._push('tokens', tokens, profile, notifications, options/*, cb*/);
+fn.push = function(tokens, profile, notifications, options) {
+  return this._push('tokens', tokens, profile, notifications, options);
 };
 
-fn._push = function(type, tokensOrUserIds, profile, notification, options/*, cb*/) {
+fn._push = function(type, tokensOrUserIds, profile, notification, options) {
   assert.string(type, 'type');
   assert.string(profile, 'profile');
   assert.arrayOfString(tokensOrUserIds, 'tokensOrUserIds');
@@ -52,7 +54,6 @@ fn._push = function(type, tokensOrUserIds, profile, notification, options/*, cb*
   assert.object(options, 'options');
   assert.optionalNumber(options.scheduled, 'options.scheduled');
   assert.optionalBool(options.production, 'options.production');
-//  assert.func(cb, 'callback');
 
   var payload = {
     notification: notification
@@ -85,9 +86,8 @@ fn._push = function(type, tokensOrUserIds, profile, notification, options/*, cb*
   Messages: A recipient of a notification. For instance, a push you send to 10 device tokens will be comprised of 10 messages. These track their delivery status independently, giving you granular detail on their delivery.
 */
 
-fn.status = function(notification_uuid/*, cb*/) {
+fn.status = function(notification_uuid) {
   assert.string(notification_uuid, 'notification_uuid');
-//  assert.func(cb, 'callback');
 
   var get = Promise.promisify(this.client.get, { context: this.client, multiArgs: true });
   return get('/push/notifications/' + notification_uuid + '/messages')
