@@ -44,6 +44,14 @@ module.exports = class IonicClient {
     return new IonicClient(options);
   }
 
+  testToken() {
+    let get = Promise.promisify(this.client.get, { context: this.client, multiArgs: true });
+    return get('/auth/test')
+      .spread(function(req, res, obj) {
+        return Promise.resolve(obj, req, res);
+      });
+  }
+
   pushToUsers(userIds, profile, notification, options) {
     return this._push('user_ids', userIds, profile, notification, options);
   }
