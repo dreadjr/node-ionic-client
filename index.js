@@ -4,9 +4,9 @@
 //import restify from 'restify';
 //import assert from 'assert-plus';
 
-var restify = require('restify');
-var assert = require('assert-plus');
-var Promise = require('bluebird');
+let restify = require('restify');
+let assert = require('assert-plus');
+let Promise = require('bluebird');
 
 module.exports = class IonicClient {
   constructor(options) {
@@ -14,8 +14,9 @@ module.exports = class IonicClient {
     assert.string(options.apiToken, 'options.apiToken');
     assert.optionalObject(options.log, 'options.log');
     assert.optionalString(options.url, 'options.url');
+    assert.optionalString(options.securityProfile, 'options.securityProfile');
 
-    var url = options.url || 'https://api.ionic.io/';
+    let url = options.url || 'https://api.ionic.io/';
 
     this.client = restify.createJsonClient({
       log: options.log,
@@ -33,13 +34,15 @@ module.exports = class IonicClient {
     if (options.log) {
       this.log = options.log.child({component: 'IonicClient'}, true);
     }
+
     this.url = options.url;
     this.apiToken = options.apiToken;
+    this.securityProfile = options.securityProfile;
   }
 
-//  createClient(options) {
-//    return new IonicClient(options);
-//  }
+  static createClient(options) {
+    return new IonicClient(options);
+  }
 
   pushToUsers(userIds, profile, notification, options) {
     return this._push('user_ids', userIds, profile, notification, options);
@@ -62,7 +65,7 @@ module.exports = class IonicClient {
     assert.optionalNumber(options.scheduled, 'options.scheduled');
     assert.optionalBool(options.production, 'options.production');
 
-    var payload = {
+    let payload = {
       notification: notification
     };
 
@@ -78,9 +81,9 @@ module.exports = class IonicClient {
     }
 
     // set security profile
-    payload.profile = profile;
+    payload.profile = profile || this.securityProfile;
 
-    var post = Promise.promisify(this.client.post, { context: this.client, multiArgs: true });
+    let post = Promise.promisify(this.client.post, { context: this.client, multiArgs: true });
     return post('/push/notifications', payload)
       .spread(function(req, res, obj) {
         return Promise.resolve(obj, req, res);
@@ -96,8 +99,8 @@ module.exports = class IonicClient {
   status(notification_uuid) {
     assert.string(notification_uuid, 'notification_uuid');
 
-    var get = Promise.promisify(this.client.get, { context: this.client, multiArgs: true });
-    return get('/push/notifications/' + notification_uuid + '/messages')
+    let get = Promise.promisify(this.client.get, { context: this.client, multiArgs: true });
+    return get(`/push/notifications/${notification_uuid}/messages`)
       .spread(function(req, res, obj) {
         return Promise.resolve(obj, req, res);
       });

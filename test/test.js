@@ -36,7 +36,8 @@ describe('client', function () {
     // log: log
   };
 
-  var client = new ionic(options);
+//  var client = new ionic(options); // OR
+  var client = ionic.createClient(options);
 
   before(function () {
     nock.disableNetConnect();
